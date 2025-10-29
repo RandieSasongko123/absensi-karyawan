@@ -7,11 +7,12 @@ import {
   Animated,
   Easing,
   Image,
+  Modal,
   RefreshControl,
   TouchableOpacity,
   View
 } from 'react-native';
-import CustomText from '../../components/CustomText'; // Import CustomText
+import CustomText from '../../components/CustomText';
 import Loading from '../../components/Loading';
 import { useAuth } from '../../context/AuthContext';
 import { Colors } from '../../styles/global';
@@ -32,10 +33,12 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [location, setLocation] = useState<any>(null);
   const [locationError, setLocationError] = useState<string>('');
+  const [gpsLoading, setGpsLoading] = useState(false); // State untuk loading GPS
 
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
+  const spinAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!isAuthenticated) router.replace('/(auth)/login');
@@ -65,22 +68,65 @@ export default function HomeScreen() {
     ]).start();
   }, []);
 
+  // Animasi spinning untuk icon loading
+  useEffect(() => {
+    if (gpsLoading) {
+      Animated.loop(
+        Animated.timing(spinAnim, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      ).start();
+    } else {
+      spinAnim.setValue(0);
+    }
+  }, [gpsLoading]);
+
+  const spin = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   const requestLocationPermission = async () => {
     if (!Location) {
       setLocationError('Modul lokasi tidak tersedia');
       return;
     }
+
+    setGpsLoading(true); // Mulai loading
+
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setLocationError('Izin lokasi ditolak');
+        Alert.alert('Izin Lokasi', 'Izin lokasi diperlukan untuk absensi. Silakan aktifkan di pengaturan perangkat.');
         return;
       }
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
-      setLocationError('');
+
+      // Simulasi proses mendapatkan lokasi dengan delay
+      setTimeout(async () => {
+        try {
+          let location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+            timeout: 10000,
+          });
+          setLocation(location);
+          setLocationError('');
+          Alert.alert('Sukses', 'Lokasi berhasil didapatkan');
+        } catch (error) {
+          setLocationError('Gagal mendapatkan lokasi');
+          Alert.alert('Error', 'Gagal mendapatkan lokasi. Pastikan GPS aktif dan coba lagi.');
+        } finally {
+          setGpsLoading(false);
+        }
+      }, 1500);
+
     } catch (error) {
-      setLocationError('Gagal mendapatkan lokasi');
+      setLocationError('Gagal mendapatkan izin lokasi');
+      setGpsLoading(false);
+      Alert.alert('Error', 'Terjadi kesalahan saat meminta izin lokasi');
     }
   };
 
@@ -193,7 +239,7 @@ export default function HomeScreen() {
     <Animated.ScrollView
       style={{
         flex: 1,
-        backgroundColor: '#F9FAFB',
+        backgroundColor: '#F7F7F7',
         opacity: fadeAnim,
         transform: [{ translateY: slideAnim }],
       }}
@@ -205,12 +251,13 @@ export default function HomeScreen() {
         intensity={70}
         tint="light"
         style={{
+          backgroundColor: '#fff',
           borderRadius: 16,
           padding: 16,
           marginBottom: 16,
           shadowColor: '#000',
-          shadowOpacity: 0.08,
-          shadowRadius: 6,
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
         }}
       >
         <View style={{ alignItems: 'center', marginBottom: 12 }}>
@@ -250,7 +297,12 @@ export default function HomeScreen() {
               {location ? 'GPS Aktif' : 'GPS Tidak Aktif'}
             </CustomText>
           </View>
-          <AnimatedButton title="Aktifkan Ulang" variant="secondary" onPress={requestLocationPermission} />
+          <AnimatedButton 
+            title="Aktifkan Ulang" 
+            variant="secondary" 
+            onPress={requestLocationPermission} 
+            disabled={gpsLoading}
+          />
         </View>
 
         <CustomText variant="regular" size="sm" style={{ color: Colors.gray, marginTop: 6, textAlign: 'center' }}>
@@ -318,11 +370,12 @@ export default function HomeScreen() {
         intensity={70}
         tint="light"
         style={{
+          backgroundColor: '#fff',
           borderRadius: 16,
           padding: 16,
           shadowColor: '#000',
-          shadowOpacity: 0.06,
-          shadowRadius: 6,
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
         }}
       >
         <CustomText variant="bold" size="lg" style={{ color: Colors.primary, marginBottom: 10 }}>
@@ -362,6 +415,88 @@ export default function HomeScreen() {
           onPress={() => router.push('/(tabs)/history')}
         />
       </BlurView>
+
+      {/* Modal Loading GPS */}
+      <Modal
+        visible={gpsLoading}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: '#fff',
+              borderRadius: 16,
+              padding: 24,
+              alignItems: 'center',
+              width: '80%',
+              maxWidth: 300,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              elevation: 5,
+            }}
+          >
+            {/* Spinning Icon */}
+            <Animated.View style={{ transform: [{ rotate: spin }] }}>
+              <Ionicons name="location" size={40} color={Colors.primary} />
+            </Animated.View>
+
+            <CustomText 
+              variant="semiBold" 
+              size="lg" 
+              style={{ marginTop: 16, marginBottom: 8, textAlign: 'center' }}
+            >
+              Mendapatkan Lokasi
+            </CustomText>
+
+            <CustomText 
+              variant="regular" 
+              size="sm" 
+              style={{ color: Colors.gray, textAlign: 'center', marginBottom: 16 }}
+            >
+              Sedang mengaktifkan GPS dan mendapatkan lokasi Anda...
+            </CustomText>
+
+            {/* Progress Bar */}
+            <View
+              style={{
+                height: 4,
+                backgroundColor: '#f0f0f0',
+                borderRadius: 2,
+                width: '100%',
+                overflow: 'hidden',
+              }}
+            >
+              <Animated.View
+                style={{
+                  height: '100%',
+                  backgroundColor: Colors.primary,
+                  borderRadius: 2,
+                  width: '70%', // Fixed progress untuk menunjukkan proses
+                }}
+              />
+            </View>
+
+            <CustomText 
+              variant="regular" 
+              size="xs" 
+              style={{ color: Colors.gray, marginTop: 12 }}
+            >
+              Harap tunggu sebentar...
+            </CustomText>
+          </View>
+        </View>
+      </Modal>
     </Animated.ScrollView>
   );
 }

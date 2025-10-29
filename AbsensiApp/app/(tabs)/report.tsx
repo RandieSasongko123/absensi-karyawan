@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import CustomText from '../../components/CustomText';
@@ -46,11 +47,15 @@ export default function ReportScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <CustomText variant="bold" size="2xl" style={styles.title}>
-        Laporan Absensi
-      </CustomText>
+      {/* 🟦 Title */}
+      <View style={{ flexDirection: 'row' }}>
+        {/* <Ionicons name="bar-chart-outline" size={24} color="#3498db" style={{ marginRight: 8 }} /> */}
+        <CustomText variant="bold" size="2xl" style={styles.title}>
+          Laporan Absensi
+        </CustomText>
+      </View>
 
-      {/* Filter Buttons */}
+      {/* 🟨 Filter Buttons */}
       <View style={styles.filterContainer}>
         <View style={styles.filterButtonsContainer}>
           {FILTERS.map((filter) => (
@@ -66,45 +71,71 @@ export default function ReportScreen() {
                 },
               ]}
             >
-              <CustomText
-                variant={filterBy === filter.key ? 'medium' : 'regular'}
-                size="sm"
-                style={{
-                  color: filterBy === filter.key ? '#fff' : '#444',
-                  textAlign: 'center',
-                }}
-              >
-                {filter.label}
-              </CustomText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons
+                  name={
+                    filter.key === 'today'
+                      ? 'sunny-outline'
+                      : filter.key === 'week'
+                        ? 'calendar-outline'
+                        : filter.key === 'month'
+                          ? 'calendar-number-outline'
+                          : 'trending-up-outline'
+                  }
+                  size={12} // 🔽 Ukuran ikon lebih kecil
+                  color={filterBy === filter.key ? '#fff' : '#444'}
+                  style={{ marginRight: 3 }} // 🔽 Jarak sedikit saja
+                />
+                <CustomText
+                  variant={filterBy === filter.key ? 'medium' : 'regular'}
+                  size="xs" // 🔽 Ubah ukuran teks ke extra small
+                  style={{
+                    color: filterBy === filter.key ? '#fff' : '#444',
+                    fontSize: 11, // 🔽 Pastikan ukuran kecil tapi tetap terbaca
+                  }}
+                >
+                  {filter.label}
+                </CustomText>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      {/* Loading State */}
+      {/* 🌀 Loading */}
       {loading && <ActivityIndicator size="large" color="#3498db" style={{ marginTop: 20 }} />}
 
-      {/* Error State */}
+      {/* ❌ Error */}
       {error && !loading && (
-        <CustomText style={styles.errorText}>{error}</CustomText>
+        <View style={{ alignItems: 'center', marginTop: 20 }}>
+          <Ionicons name="warning-outline" size={40} color="#ff5555" style={{ marginBottom: 8 }} />
+          <CustomText style={styles.errorText}>{error}</CustomText>
+        </View>
       )}
 
-      {/* Summary */}
+      {/* 📋 Summary */}
       {summary && !loading && (
         <View style={styles.summaryBox}>
-          <CustomText variant="semiBold" size="lg" style={styles.summaryTitle}>
-            Ringkasan
-          </CustomText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+            <Ionicons name="analytics-outline" size={22} color="#2c3e50" style={{ marginRight: 6 }} />
+            <CustomText variant="semiBold" size="lg" style={styles.summaryTitle}>
+              Ringkasan
+            </CustomText>
+          </View>
+
           {[
-            { label: 'Total Data', value: summary.total_records },
-            { label: 'Selesai Absensi', value: summary.completed_absensi },
-            { label: 'Belum Selesai', value: summary.pending_absensi },
-            { label: 'Filter Aktif', value: summary.filter_applied },
+            { label: 'Total Data', value: summary.total_records, icon: 'albums-outline' },
+            { label: 'Selesai Absensi', value: summary.completed_absensi, icon: 'checkmark-circle-outline' },
+            { label: 'Belum Selesai', value: summary.pending_absensi, icon: 'time-outline' },
+            { label: 'Filter Aktif', value: summary.filter_applied, icon: 'funnel-outline' },
           ].map((item) => (
             <View key={item.label} style={styles.summaryItem}>
-              <CustomText variant="regular" style={styles.label}>
-                {item.label}:
-              </CustomText>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={18} color="#3498db" />
+                <CustomText variant="regular" style={styles.label}>
+                  {item.label}
+                </CustomText>
+              </View>
               <CustomText variant="medium" style={styles.value}>
                 {item.value}
               </CustomText>
@@ -113,44 +144,71 @@ export default function ReportScreen() {
         </View>
       )}
 
-      {/* Records List */}
+      {/* 📄 Records List */}
       {!loading && records.length > 0 && (
         <View style={styles.listContainer}>
-          <CustomText variant="semiBold" size="lg" style={styles.sectionTitle}>
-            Daftar Absensi
-          </CustomText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+            <Ionicons name="list-outline" size={20} color="#2c3e50" style={{ marginRight: 6 }} />
+            <CustomText variant="semiBold" size="lg" style={styles.sectionTitle}>
+              Daftar Absensi
+            </CustomText>
+          </View>
+
           {records.map((item) => (
             <View key={item.id} style={styles.card}>
-              <CustomText variant="bold" style={styles.name}>
-                {item.employee?.name}
-              </CustomText>
-              <CustomText variant="regular" style={styles.text}>
-                Check In: {item.check_in_time ? new Date(item.check_in_time).toLocaleTimeString() : '-'}
-              </CustomText>
-              <CustomText variant="regular" style={styles.text}>
-                Check Out: {item.check_out_time ? new Date(item.check_out_time).toLocaleTimeString() : '-'}
-              </CustomText>
-              <CustomText variant="regular" style={styles.subText}>
-                Tanggal: {new Date(item.created_at).toLocaleDateString()}
-              </CustomText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                <Ionicons name="person-circle-outline" size={20} color="#2c3e50" style={{ marginRight: 6 }} />
+                <CustomText variant="bold" style={styles.name}>
+                  {item.employee?.name}
+                </CustomText>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="log-in-outline" size={16} color="#27ae60" style={{ marginRight: 4 }} />
+                <CustomText variant="regular" style={styles.text}>
+                  Check In:{' '}
+                  {item.check_in_time ? new Date(item.check_in_time).toLocaleTimeString() : '-'}
+                </CustomText>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="log-out-outline" size={16} color="#e74c3c" style={{ marginRight: 4 }} />
+                <CustomText variant="regular" style={styles.text}>
+                  Check Out:{' '}
+                  {item.check_out_time ? new Date(item.check_out_time).toLocaleTimeString() : '-'}
+                </CustomText>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                <Ionicons name="calendar-outline" size={14} color="#777" style={{ marginRight: 4 }} />
+                <CustomText variant="regular" style={styles.subText}>
+                  Tanggal: {new Date(item.created_at).toLocaleDateString()}
+                </CustomText>
+              </View>
             </View>
           ))}
         </View>
       )}
 
-      {/* Empty State */}
+      {/* 🚫 Empty State */}
       {!loading && records.length === 0 && !error && (
-        <CustomText variant="regular" style={styles.emptyText}>
-          Tidak ada data absensi ditemukan.
-        </CustomText>
+        <View style={{ alignItems: 'center', marginTop: 40 }}>
+          <Ionicons name="folder-open-outline" size={60} color="#bbb" style={{ marginBottom: 8 }} />
+          <CustomText variant="regular" style={styles.emptyText}>
+            Tidak ada data absensi ditemukan.
+          </CustomText>
+        </View>
       )}
 
-      {/* Refresh Button */}
+      {/* 🔄 Refresh Button */}
       {!loading && (
         <TouchableOpacity style={styles.refreshButton} onPress={fetchReport}>
-          <CustomText variant="medium" style={styles.refreshText}>
-            🔄 Muat Ulang
-          </CustomText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="refresh-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
+            <CustomText variant="medium" style={styles.refreshText}>
+              Muat Ulang
+            </CustomText>
+          </View>
         </TouchableOpacity>
       )}
     </ScrollView>

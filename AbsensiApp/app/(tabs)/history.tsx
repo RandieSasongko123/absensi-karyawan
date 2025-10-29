@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -271,12 +272,14 @@ export default function HistoryScreen() {
         }
         ListHeaderComponent={
           <>
-            <CustomText variant="bold" size="2xl" style={{ marginBottom: 4 }}>
-              Riwayat Absensi
-            </CustomText>
-            <CustomText variant="regular" size="sm" style={{ color: Colors.gray, marginBottom: 16 }}>
-              Lihat catatan kehadiran Anda
-            </CustomText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+              <Ionicons name="time-outline" size={24} color={Colors.primary} style={{ marginRight: 6 }} />
+              <CustomText variant="bold" size="2xl">
+                Riwayat Absensi
+              </CustomText>
+            </View>
+
+            <CustomText variant="regular" size="sm" style={{ color: Colors.gray, marginBottom: 16 }}> Lihat catatan kehadiran Anda </CustomText>
 
             {/* Filter Section with Animated Press */}
             <View
@@ -384,15 +387,29 @@ export default function HistoryScreen() {
                 backgroundColor: '#fff',
                 borderRadius: 16,
                 marginTop: 20,
+                shadowColor: '#000',
+                shadowOpacity: 0.05,
+                shadowRadius: 6,
               }}
             >
-              <CustomText variant="regular" size="sm" style={{ color: Colors.gray }}>
+              {/* Ikon ilustrasi */}
+              <Ionicons name="calendar-outline" size={64} color={Colors.gray} style={{ marginBottom: 12 }} />
+
+              {/* Teks utama */}
+              <CustomText variant="semiBold" style={{ color: Colors.dark }}>
                 Belum ada data absensi
               </CustomText>
-              <CustomText variant="regular" size="xs" style={{ color: Colors.gray, marginTop: 4 }}>
+
+              {/* Teks tambahan */}
+              <CustomText
+                variant="regular"
+                size="sm"
+                style={{ color: Colors.gray, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }}
+              >
                 Mulai dengan check-in pertama Anda
               </CustomText>
             </View>
+
           )
         }
         showsVerticalScrollIndicator={false}

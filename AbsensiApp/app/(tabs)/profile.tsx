@@ -1,21 +1,27 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Animated,
   Image,
+  Modal,
   ScrollView,
   TouchableOpacity,
   View
 } from 'react-native';
 import Button from '../../components/Button';
-import CustomText from '../../components/CustomText'; // Import CustomText
+import CustomText from '../../components/CustomText';
 import { useAuth } from '../../context/AuthContext';
 import { Colors } from '../../styles/global';
 
 export default function ProfileScreen() {
   const { user, logout, isAdmin } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const logoutModalScale = useRef(new Animated.Value(0.8)).current;
+  const logoutModalOpacity = useRef(new Animated.Value(0)).current;
+  const adminModalScale = useRef(new Animated.Value(0.8)).current;
+  const adminModalOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -25,15 +31,81 @@ export default function ProfileScreen() {
     }).start();
   }, []);
 
+  const openLogoutModal = () => {
+    setShowLogoutModal(true);
+    Animated.parallel([
+      Animated.spring(logoutModalScale, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(logoutModalOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const closeLogoutModal = () => {
+    Animated.parallel([
+      Animated.spring(logoutModalScale, {
+        toValue: 0.8,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(logoutModalOpacity, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowLogoutModal(false);
+    });
+  };
+
+  const openAdminModal = () => {
+    setShowAdminModal(true);
+    Animated.parallel([
+      Animated.spring(adminModalScale, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(adminModalOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const closeAdminModal = () => {
+    Animated.parallel([
+      Animated.spring(adminModalScale, {
+        toValue: 0.8,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(adminModalOpacity, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowAdminModal(false);
+    });
+  };
+
   const handleLogout = () => {
-    Alert.alert('Konfirmasi Logout', 'Apakah Anda yakin ingin logout?', [
-      { text: 'Batal', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: logout,
-      },
-    ]);
+    closeLogoutModal();
+    setTimeout(() => {
+      logout();
+    }, 300);
   };
 
   const getRoleColor = () => (isAdmin ? Colors.danger : Colors.secondary);
@@ -205,7 +277,7 @@ export default function ProfileScreen() {
         {isAdmin && (
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => Alert.alert('Info', 'Panel admin akan segera tersedia')}
+            onPress={openAdminModal}
             style={{
               backgroundColor: '#FFFFFF',
               borderRadius: 16,
@@ -273,9 +345,211 @@ export default function ProfileScreen() {
             Keluar dari akun Anda. Anda perlu login kembali untuk menggunakan
             aplikasi.
           </CustomText>
-          <Button title="Logout" variant="danger" onPress={handleLogout} />
+          <Button 
+            title="Logout" 
+            variant="danger" 
+            onPress={openLogoutModal}
+          />
         </View>
       </Animated.View>
+
+      {/* Modal Konfirmasi Logout */}
+      <Modal
+        visible={showLogoutModal}
+        transparent
+        animationType="none"
+        onRequestClose={closeLogoutModal}
+      >
+        <TouchableOpacity
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 20,
+          }}
+          activeOpacity={1}
+          onPressOut={closeLogoutModal}
+        >
+          <Animated.View
+            style={{
+              transform: [{ scale: logoutModalScale }],
+              opacity: logoutModalOpacity,
+              width: '100%',
+              maxWidth: 320,
+            }}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: 20,
+                padding: 24,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.25,
+                shadowRadius: 12,
+                elevation: 8,
+              }}
+            >
+              {/* Icon Warning */}
+              <View style={{ alignItems: 'center', marginBottom: 16 }}>
+                <View
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: 30,
+                    backgroundColor: Colors.danger + '15',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginBottom: 12,
+                  }}
+                >
+                  <Ionicons name="log-out-outline" size={32} color={Colors.danger} />
+                </View>
+              </View>
+
+              {/* Judul */}
+              <CustomText
+                variant="bold"
+                size="xl"
+                style={{
+                  textAlign: 'center',
+                  color: Colors.dark,
+                  marginBottom: 8,
+                }}
+              >
+                Konfirmasi Logout
+              </CustomText>
+
+              {/* Pesan */}
+              <CustomText
+                variant="regular"
+                size="base"
+                style={{
+                  textAlign: 'center',
+                  color: Colors.gray,
+                  marginBottom: 24,
+                  lineHeight: 20,
+                }}
+              >
+                Apakah Anda yakin ingin logout dari akun Anda?
+              </CustomText>
+
+              {/* Tombol Aksi */}
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <Button
+                  title="Batal"
+                  variant="secondary"
+                  onPress={closeLogoutModal}
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  title="Ya, Logout"
+                  variant="danger"
+                  onPress={handleLogout}
+                  style={{ flex: 1 }}
+                />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Modal Info Panel Admin */}
+      <Modal
+        visible={showAdminModal}
+        transparent
+        animationType="none"
+        onRequestClose={closeAdminModal}
+      >
+        <TouchableOpacity
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 20,
+          }}
+          activeOpacity={1}
+          onPressOut={closeAdminModal}
+        >
+          <Animated.View
+            style={{
+              transform: [{ scale: adminModalScale }],
+              opacity: adminModalOpacity,
+              width: '100%',
+              maxWidth: 320,
+            }}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: 20,
+                padding: 24,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.25,
+                shadowRadius: 12,
+                elevation: 8,
+              }}
+            >
+              {/* Icon Info */}
+              <View style={{ alignItems: 'center', marginBottom: 16 }}>
+                <View
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: 30,
+                    backgroundColor: Colors.secondary + '15',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginBottom: 12,
+                  }}
+                >
+                  <Ionicons name="information-circle" size={32} color={Colors.secondary} />
+                </View>
+              </View>
+
+              {/* Judul */}
+              <CustomText
+                variant="bold"
+                size="xl"
+                style={{
+                  textAlign: 'center',
+                  color: Colors.dark,
+                  marginBottom: 8,
+                }}
+              >
+                Panel Admin
+              </CustomText>
+
+              {/* Pesan */}
+              <CustomText
+                variant="regular"
+                size="base"
+                style={{
+                  textAlign: 'center',
+                  color: Colors.gray,
+                  marginBottom: 24,
+                  lineHeight: 20,
+                }}
+              >
+                Panel admin akan segera tersedia. Fitur ini sedang dalam pengembangan untuk memberikan akses kontrol yang lebih lengkap.
+              </CustomText>
+
+              {/* Tombol OK */}
+              <Button
+                title="Mengerti"
+                variant="secondary"
+                onPress={closeAdminModal}
+                style={{ width: '100%' }}
+              />
+            </TouchableOpacity>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 }
